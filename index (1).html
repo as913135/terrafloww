@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TerraFlow — Manali Underground Utility Intelligence</title>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Leaflet GIS CSS (Fallback) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- TerraFlow Stylesheet -->
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="icon" type="image/svg+xml" href="./terraflow_logo.svg">
+</head>
+<body>
+
+  <!-- ==========================================================================
+       Top Navigation Bar
+       ========================================================================== -->
+  <header class="app-header">
+    <!-- Brand Link -->
+    <div class="brand-container" onclick="window.app.switchPage('dashboard')">
+      <div class="brand-icon-box">
+        <!-- Radar Icon -->
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"></path>
+          <path d="M4 6h.01"></path>
+          <path d="M2.29 9.62A10 10 0 1 0 21.31 8.35"></path>
+          <path d="M16.24 7.76A6 6 0 1 0 8.23 16.24"></path>
+          <path d="M12 12h.01"></path>
+        </svg>
+      </div>
+      <div class="brand-text-wrap">
+        <span class="brand-title">TerraFlow</span>
+        <span class="brand-sub">Pan-India Subsurface &amp; Critical Pipeline Intelligence</span>
+      </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="main-nav">
+      <button class="nav-link active" data-page="dashboard" onclick="window.app.switchPage('dashboard')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-link" data-page="map" onclick="window.app.switchPage('map')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+        <span>Map &amp; 3D</span>
+      </button>
+      <button class="nav-link" data-page="reports" onclick="window.app.switchPage('reports')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Incident Reports</span>
+      </button>
+      <button class="nav-link" data-page="records" onclick="window.app.switchPage('records')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+        <span>Records</span>
+      </button>
+    </nav>
+
+    <!-- Header Right Controls -->
+    <div class="header-right">
+      <!-- National / Regional Grid Selector -->
+      <select id="town-select" class="town-select-compact" title="Select National / Regional Pipeline Grid">
+        <option value="india_national" selected>🇮🇳 All India — National Pipeline Network</option>
+        <option value="delhi_ncr">🏙️ Delhi NCR — Subsurface Corridor</option>
+        <option value="mumbai_mmr">🌊 Mumbai MMR — Water Ducts &amp; Tunnels</option>
+        <option value="bengaluru">💧 Bengaluru — Cauvery Water Grid</option>
+        <option value="manali">🏔️ Manali, HP — Mountain Pilot</option>
+        <option value="shimla">🏔️ Shimla, HP</option>
+        <option value="dharamshala">🏔️ Dharamshala, HP</option>
+        <option value="mussoorie">🏔️ Mussoorie, UK</option>
+      </select>
+
+      <!-- Notification Bell -->
+      <button id="btn-notif-bell" class="btn-notif-bell" onclick="window.notificationService.toggleDrawer()" title="Push Incident Notifications">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <span id="notif-badge-count" class="notif-badge-pill">3</span>
+      </button>
+
+      <!-- Primary Action: Report Incident -->
+      <button class="btn-report-incident" onclick="window.app.openCommunityReportModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Report Incident</span>
+      </button>
+
+      <!-- User Profile HUD Section -->
+      <div id="user-profile-header"></div>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       PAGE 1: DASHBOARD (Clean, Friendly Overview)
+       ========================================================================== -->
+  <main id="page-dashboard" class="page-view active-page">
+    <div class="page-container">
+
+      <!-- Hero Section -->
+      <section class="dashboard-hero">
+        <span class="hero-pill-badge">
+          🇮🇳 National Pipeline Grid &bull; Ministry of Petroleum &amp; Natural Gas &bull; Ministry of Jal Shakti
+        </span>
+        <h1 class="hero-title">
+          India's Subsurface Digital Twin &amp; Critical Pipeline Intelligence.
+        </h1>
+        <p class="hero-desc">
+          TerraFlow maps India's critical energy transmission pipelines (GAIL HVJ, Urja Ganga), petroleum product corridors (IOCL, BPCL), and municipal bulk water supply networks (Delhi Jal Board, Bengaluru Cauvery Grid, Mumbai Vaitarna Mega-Tunnels, Narmada Potable Grid). Integrated with real-time multi-factor AI risk prediction and device push alerts.
+        </p>
+        <div class="hero-cta-row">
+          <button class="btn-hero-primary" onclick="window.app.switchPage('map')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>
+            <span>Open National Map &amp; 3D View</span>
+          </button>
+          <button class="btn-hero-secondary" onclick="window.app.openCommunityReportModal()">
+            <span>Report Ground Incident →</span>
+          </button>
+          <button class="btn-hero-secondary" onclick="window.notificationService.scheduleBackgroundAlert(5)" title="Schedule a 5-second background alert then minimize or close Chrome to test">
+            <span>⏱️ Test Background Alert (Close Chrome &amp; Test)</span>
+          </button>
+          <button class="btn-hero-secondary" onclick="window.app.openAuthModal('register')">
+            <span>👤 Create Verified Account</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Operational Advisory Banner -->
+      <section class="advisory-banner">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" style="flex-shrink:0; margin-top:2px;">
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <p>
+          <strong>National Security &amp; Safety Advisory — </strong>TerraFlow calculates failure vulnerability, excavation strike probability &amp; inspection priority across cross-country hydrocarbon and municipal water corridors. Access is restricted to verified operators and engineers. In-line inspection (PIG) and non-destructive potholing are mandatory prior to any mechanical excavation.
+        </p>
+      </section>
+
+      <!-- 5 Key Metric Cards (KPIs) -->
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Network Mapped</span>
+          <span class="kpi-value" id="kpi-net-km">18.4 km</span>
+          <span class="kpi-sub" id="kpi-net-sub">42 segments · 3 utilities</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">High-Risk Segments</span>
+          <span class="kpi-value" id="kpi-high-risk" style="color:#ef4444;">3</span>
+          <span class="kpi-sub">verify + permit before dig</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Moderate Risk</span>
+          <span class="kpi-value" id="kpi-mod-risk" style="color:#f59e0b;">5</span>
+          <span class="kpi-sub">schedule inspections</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Open Citizen Reports</span>
+          <span class="kpi-value" id="kpi-open-rep" style="color:var(--accent-mint);">4</span>
+          <span class="kpi-sub">wet patches, pressure, dhasna</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Unverified Records</span>
+          <span class="kpi-value" id="kpi-unverified" style="color:var(--text-muted);">42%</span>
+          <span class="kpi-sub">dashed lines on the map</span>
+        </div>
+      </section>
+
+      <!-- Dual Column Section: How Risk Model Works & Trust Roadmap -->
+      <section class="dashboard-columns">
+        <!-- Left: Risk Model Factors -->
+        <div class="content-card">
+          <div class="card-heading-row">
+            <h3>How the Risk Model Works</h3>
+            <span class="badge">Zero Hardware</span>
+          </div>
+          <p style="font-size:13px; color:var(--text-muted); line-height:1.5; margin-bottom:14px;">
+            Failure risk is scored from existing public records and environmental indices. No IoT sensors or road tearing required.
+          </p>
+
+          <div class="factor-list-item">
+            <div>
+              <div class="factor-title">Age vs design life</div>
+              <div class="factor-desc">Pipes past their material's design life rise fastest</div>
+            </div>
+            <span class="factor-weight">25%</span>
+          </div>
+
+          <div class="factor-list-item">
+            <div>
+              <div class="factor-title">Material vulnerability</div>
+              <div class="factor-desc">Cast iron / GI corrode in hill scree soil; HDPE flexes</div>
+            </div>
+            <span class="factor-weight">20%</span>
+          </div>
+
+          <div class="factor-list-item">
+            <div>
+              <div class="factor-title">Repair history (15 yr)</div>
+              <div class="factor-desc">Past failures cluster on the same weak segments</div>
+            </div>
+            <span class="factor-weight">20%</span>
+          </div>
+
+          <div class="factor-list-item">
+            <div>
+              <div class="factor-title">Terrain slope stress</div>
+              <div class="factor-desc">Gradients above 20° add soil-creep joint tension</div>
+            </div>
+            <span class="factor-weight">15%</span>
+          </div>
+
+          <div class="factor-list-item">
+            <div>
+              <div class="factor-title">Rainfall saturation</div>
+              <div class="factor-desc">Monsoon soil moisture lifts hydraulic failure odds</div>
+            </div>
+            <span class="factor-weight">10%</span>
+          </div>
+
+          <div class="factor-list-item">
+            <div>
+              <div class="factor-title">Citizen reports (30d)</div>
+              <div class="factor-desc">Wet patches &amp; pressure drops near a segment</div>
+            </div>
+            <span class="factor-weight">10%</span>
+          </div>
+        </div>
+
+        <!-- Right: Trust Roadmap -->
+        <div class="content-card">
+          <div class="card-heading-row">
+            <h3>Trust Roadmap</h3>
+            <span class="badge">Government Pilot</span>
+          </div>
+          <p style="font-size:13px; color:var(--text-muted); line-height:1.5; margin-bottom:14px;">
+            A phased, low-risk approach designed to build trust with Himachal municipal bodies before field implementation.
+          </p>
+
+          <div class="roadmap-step">
+            <div class="step-indicator active">1</div>
+            <div class="step-text">
+              <h4>Phase 1 — Now</h4>
+              <p>Synthetic-data prototype (you are here)</p>
+            </div>
+          </div>
+
+          <div class="roadmap-step">
+            <div class="step-indicator">2</div>
+            <div class="step-text">
+              <h4>Phase 2</h4>
+              <p>Utility partnership — JSV &amp; MC Manali data ingestion</p>
+            </div>
+          </div>
+
+          <div class="roadmap-step">
+            <div class="step-indicator">3</div>
+            <div class="step-text">
+              <h4>Phase 3</h4>
+              <p>Access control, audit logs &amp; work-permit integration</p>
+            </div>
+          </div>
+
+          <div class="roadmap-step">
+            <div class="step-indicator">4</div>
+            <div class="step-text">
+              <h4>Phase 4</h4>
+              <p>Supervised pilot along Mall Road &amp; Old Manali</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       PAGE 2: MAP & 3D VIEW (Full-Screen, Clean, Uncluttered)
+       ========================================================================== -->
+  <main id="page-map" class="page-view">
+    <div class="map-page-wrapper">
+
+      <!-- Viewports (2D Map & 3D Three.js) -->
+      <div id="leaflet-map" class="map-viewport-full"></div>
+      <div id="three-container" class="map-viewport-full" style="display:none;"></div>
+
+      <!-- Floating Top-Left HUD (Utility filters + Base layers + Legend) -->
+      <div class="floating-map-hud">
+        <!-- Utility Filter Buttons -->
+        <div class="hud-pill-group">
+          <button class="hud-btn active" id="btn-toggle-gas" onclick="window.app.toggleUtilityFilter('gas_transmission')">
+            <span style="width:8px; height:8px; border-radius:50%; background:#f97316;"></span>
+            <span>Gas</span>
+          </button>
+          <button class="hud-btn active" id="btn-toggle-oil" onclick="window.app.toggleUtilityFilter('oil_petroleum')">
+            <span style="width:8px; height:8px; border-radius:50%; background:#a855f7;"></span>
+            <span>Oil/Crude</span>
+          </button>
+          <button class="hud-btn active" id="btn-toggle-water" onclick="window.app.toggleUtilityFilter('water_main')">
+            <span style="width:8px; height:8px; border-radius:50%; background:#06b6d4;"></span>
+            <span>Water</span>
+          </button>
+          <button class="hud-btn active" id="btn-toggle-fiber" onclick="window.app.toggleUtilityFilter('telecom_fiber')">
+            <span style="width:8px; height:8px; border-radius:50%; background:#ec4899;"></span>
+            <span>Fiber OFC</span>
+          </button>
+          <button class="hud-btn active" id="btn-toggle-cable" onclick="window.app.toggleUtilityFilter('electric_11kv')">
+            <span style="width:8px; height:8px; border-radius:50%; background:#f59e0b;"></span>
+            <span>Power</span>
+          </button>
+          <button class="hud-btn active" id="btn-toggle-sewer" onclick="window.app.toggleUtilityFilter('sewer_gravity')">
+            <span style="width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
+            <span>Sewer</span>
+          </button>
+        </div>
+
+        <div class="hud-divider"></div>
+
+        <!-- Base Map Toggle (Google Satellite / Mountain Terrain / Dark) -->
+        <div class="hud-pill-group">
+          <button class="hud-btn active" id="btn-base-sat" onclick="window.app.setMapBase('hybrid')">Satellite</button>
+          <button class="hud-btn" id="btn-base-terr" onclick="window.app.setMapBase('terrain')">Terrain</button>
+          <button class="hud-btn" id="btn-base-dark" onclick="window.app.setMapBase('dark')">Dark</button>
+        </div>
+
+        <div class="hud-divider"></div>
+
+        <!-- Risk Legend -->
+        <div class="hud-legend">
+          <div class="legend-item">
+            <span class="legend-bar" style="background:#10b981;"></span>
+            <span>Low</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-bar" style="background:#f59e0b;"></span>
+            <span>Moderate</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-bar" style="background:#ef4444;"></span>
+            <span>High</span>
+          </div>
+          <div class="legend-item" style="color:var(--text-muted);">
+            <span style="font-weight:bold; letter-spacing:1px;">- - -</span>
+            <span>Unverified</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Bottom-Left: 2D / 3D Mode Switcher -->
+      <div class="floating-view-toggle">
+        <button id="btn-view-2d" class="view-toggle-btn active" onclick="window.app.setMapViewMode('2d')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>
+          <span>2D Map</span>
+        </button>
+        <button id="btn-view-3d" class="view-toggle-btn" onclick="window.app.setMapViewMode('3d')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          <span>3D Underground</span>
+        </button>
+      </div>
+
+      <!-- Floating Pipeline Location Navigator & Quick Jump -->
+      <div class="map-location-nav-bar">
+        <div class="loc-nav-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span style="font-size:12px; font-weight:800; color:var(--text-main);">Pipeline Location:</span>
+          <select id="map-location-picker" class="map-location-select" onchange="window.app.onLocationPickerChange(this.value)">
+            <option value="">📍 Choose Pipeline Corridor / City to Inspect...</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Live Location Written Callout Banner -->
+      <div id="map-active-location-banner" class="map-active-location-banner" style="display:none;">
+        <div class="banner-loc-content">
+          <span id="loc-banner-title" class="loc-title">📍 GAIL Hazira-Vijaipur Corridor</span>
+          <span id="loc-banner-sub" class="loc-sub">Vadodara Compressor Station, Gujarat (22.3072° N, 73.1812° E) &bull; Depth: 1.8m &bull; Verified</span>
+        </div>
+        <button class="btn-loc-inspect" onclick="window.app.inspectCurrentLocationPipe()">Inspect Specs &rarr;</button>
+        <button class="btn-loc-close" onclick="document.getElementById('map-active-location-banner').style.display='none';">&times;</button>
+      </div>
+
+      <!-- Floating 3D Subsurface Controls Toolbar (Visible in 3D mode) -->
+      <div id="hud-3d-toolbar" class="hud-3d-toolbar" style="display:none;">
+        <div class="hud-3d-header">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          <span>3D Subsurface Controls</span>
+        </div>
+        <div class="hud-3d-btn-row">
+          <button class="hud-3d-btn active" id="btn-3d-iso" onclick="window.app.set3DCameraPreset('iso')">🎥 3D Iso</button>
+          <button class="hud-3d-btn" id="btn-3d-cross" onclick="window.app.set3DCameraPreset('cross_section')">📐 Trench View</button>
+          <button class="hud-3d-btn" id="btn-3d-top" onclick="window.app.set3DCameraPreset('top_down')">🗺️ Top-Down</button>
+          <button class="hud-3d-btn" id="btn-3d-rotate" onclick="window.app.toggle3DAutoRotate()">🔄 Auto-Orbit</button>
+        </div>
+        <div class="hud-3d-slider-row">
+          <span style="font-size:10px; font-weight:700; color:var(--text-muted);">Ground Transparency</span>
+          <input type="range" id="slider-3d-ground" min="0" max="0.9" step="0.05" value="0.35" oninput="window.app.set3DGroundOpacity(this.value)">
+        </div>
+        <div class="hud-3d-btn-row">
+          <button class="hud-3d-btn active" id="btn-3d-labels" onclick="window.app.toggle3DLabels()">🏷️ 3D Labels: ON</button>
+          <button class="hud-3d-btn" id="btn-3d-colormode" onclick="window.app.toggle3DColorMode()">🎨 Risk/Utility</button>
+        </div>
+      </div>
+
+      <!-- 3D On-Hover Location Tooltip -->
+      <div id="three-hover-card" class="three-hover-card" style="display:none;"></div>
+
+      <!-- Floating Top-Right Controls -->
+      <div class="floating-top-right">
+        <span class="counter-badge" id="map-segment-counter">12 segments</span>
+        <button class="btn-dig-tool" onclick="window.app.openDigSafetyModal()">
+          <span>🚜 Check Before You Dig</span>
+        </button>
+      </div>
+
+      <!-- Slide-Out Pipe Detail Panel (Opens when any pipe is clicked) -->
+      <aside id="map-pipe-panel" class="pipe-detail-panel">
+        <div class="panel-header-row">
+          <div>
+            <span id="panel-pipe-type" style="font-size:10px; font-family:monospace; text-transform:uppercase; color:#06b6d4;">Water Main</span>
+            <h3 id="panel-pipe-name" style="margin-top:2px;">Mall Road Potable Feeder Main</h3>
+            <span id="panel-pipe-id" style="font-size:11px; color:#64748b; font-family:monospace;">MNL-WTR-001</span>
+          </div>
+          <button onclick="window.app.closePipeDetailPanel()" style="background:none; border:none; color:var(--text-dim); font-size:18px; cursor:pointer; padding:4px;">✕</button>
+        </div>
+
+        <!-- Risk Score Card -->
+        <div style="background:var(--bg-card-subtle); border:1.5px solid var(--border-mint); border-radius:10px; padding:12px; display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <span style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-family:monospace; font-weight:700;">AI Risk Score</span>
+            <div id="panel-risk-score" style="font-size:28px; font-weight:900; color:#e11d48;">84/100</div>
+          </div>
+          <span id="panel-risk-badge" class="badge-high">HIGH RISK</span>
+        </div>
+
+        <!-- Physical Specs Grid -->
+        <div class="spec-grid-2col">
+          <div class="spec-box">
+            <span class="lbl">Burial Depth</span>
+            <span class="val" id="panel-pipe-depth">1.4 meters</span>
+          </div>
+          <div class="spec-box">
+            <span class="lbl">Diameter</span>
+            <span class="val" id="panel-pipe-dia">300 mm</span>
+          </div>
+          <div class="spec-box">
+            <span class="lbl">Material</span>
+            <span class="val" id="panel-pipe-mat">Cast Iron</span>
+          </div>
+          <div class="spec-box">
+            <span class="lbl">Install Year</span>
+            <span class="val" id="panel-pipe-year">1982 (42 yrs)</span>
+          </div>
+          <div class="spec-box">
+            <span class="lbl">Terrain Slope</span>
+            <span class="val" id="panel-pipe-slope">14° Incline</span>
+          </div>
+          <div class="spec-box">
+            <span class="lbl">Pressure Head</span>
+            <span class="val" id="panel-pipe-pres">6.8 bar</span>
+          </div>
+        </div>
+
+        <!-- Provenance & Verification -->
+        <div style="background:var(--bg-card-subtle); border:1.5px solid var(--border-subtle); border-radius:10px; padding:12px; font-size:11px; display:flex; flex-direction:column; gap:6px;">
+          <div><span style="color:var(--text-dim);">Data Source: </span><strong id="panel-pipe-source" style="color:var(--text-main);">Jal Shakti Vibhag Blueprint</strong></div>
+          <div><span style="color:var(--text-dim);">Verification: </span><strong id="panel-pipe-status" style="color:#d97706;">Unverified (Legacy Records)</strong></div>
+          <div><span style="color:var(--text-dim);">Authority: </span><strong id="panel-pipe-auth" style="color:var(--accent-mint);">Jal Shakti Vibhag (IPH)</strong></div>
+        </div>
+
+        <!-- Pre-Excavation Directive -->
+        <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:12px; font-size:12px; color:#fca5a5; line-height:1.5;">
+          <strong>Pre-Dig Directive:</strong>
+          <p id="panel-pipe-directive" style="margin-top:4px;">
+            Mandatory acoustic leak testing required. Mechanical excavation (JCB) prohibited within 1.5m buffer without manual hand potholing.
+          </p>
+        </div>
+
+        <button class="btn-hero-primary" style="padding:10px; font-size:13px; justify-content:center;" onclick="window.print()">
+          📄 Print Site Safety Briefing
+        </button>
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       PAGE 3: CITIZEN REPORTS BOARD
+       ========================================================================== -->
+  <main id="page-reports" class="page-view">
+    <div class="page-container">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h2 style="font-size:24px; font-weight:800; color:var(--text-main);">Citizen &amp; Field Crew Reports</h2>
+          <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">
+            Surface water sightings, pressure drop flags and road subsidence incidents submitted by Manali residents.
+          </p>
+        </div>
+        <button class="btn-report-incident" onclick="window.app.openCommunityReportModal()">
+          + File New Ground Report
+        </button>
+      </div>
+
+      <!-- Reports List Grid -->
+      <div id="reports-cards-grid" class="reports-grid">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       PAGE 4: RECORDS INVENTORY TABLE
+       ========================================================================== -->
+  <main id="page-records" class="page-view">
+    <div class="page-container">
+      <div style="margin-bottom:20px;">
+        <h2 style="font-size:24px; font-weight:800; color:var(--text-main);">Subsurface Utility Records</h2>
+        <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">
+          Searchable inventory of all mapped underground pipelines, depth levels, and verification provenance.
+        </p>
+      </div>
+
+      <!-- Search & Filter Bar -->
+      <div class="table-filter-bar">
+        <input type="text" id="records-search" class="search-input-box" placeholder="Search by name, ID, or material..." oninput="window.app.filterRecordsTable()">
+        <div style="font-size:12px; color:var(--text-muted);">
+          Showing <strong id="records-count-text" style="color:var(--text-main);">12</strong> records in <span id="records-town-name">Manali</span>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div style="overflow-x:auto;">
+        <table class="records-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Segment Name</th>
+              <th>Utility Type</th>
+              <th>Burial Depth</th>
+              <th>Diameter</th>
+              <th>Material</th>
+              <th>Install Year</th>
+              <th>Risk Score</th>
+              <th>Verification Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="records-table-body">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       Persistent Operational Notice Footer
+       ========================================================================== -->
+  <footer class="app-footer">
+    <div class="footer-content">
+      <p>
+        TerraFlow predicts <span class="highlight">inspection priority</span> from records, rainfall, slope and citizen reports — it never confirms a leak, never grants permits and never certifies site safety.
+      </p>
+      <p style="margin-top:4px;">
+        Prototype · synthetic data · Phase 1 of the trust roadmap · Manali, Himachal Pradesh
+      </p>
+    </div>
+  </footer>
+
+  <!-- ==========================================================================
+       MODALS: Report Incident & Check Before You Dig
+       ========================================================================== -->
+  <!-- 1. Report Incident Modal -->
+  <div id="report-modal" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Report Ground Incident</h3>
+        <button class="drawer-close-btn" onclick="window.app.closeCommunityReportModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:12px; color:var(--text-muted);">
+          30-second ground reporting form. Submissions feed straight into the risk model to adjust nearby pipe vulnerability without sensors.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Incident Type</label>
+          <select id="rep-type" class="form-select">
+            <option value="wet_patch">💧 Wet Patch / Water Bubbling on Road</option>
+            <option value="road_subsidence">⚠️ Road Subsidence / Sinkage / Dhasna</option>
+            <option value="low_pressure">📉 Sudden Drop in Tap Pressure</option>
+            <option value="exposed_conduit">⚡ Exposed Underground Cable / Pipe</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Location / Landmark Title</label>
+          <input type="text" id="rep-title" class="form-input" placeholder="e.g. Near Taxi Stand, Mall Road" value="Surface Water Seepage on Mall Road">
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="form-group">
+            <label class="form-label">Latitude</label>
+            <input type="number" id="rep-lat" class="form-input" step="0.0001" value="32.2396">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Longitude</label>
+            <input type="number" id="rep-lng" class="form-input" step="0.0001" value="77.1887">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Severity Level</label>
+          <select id="rep-severity" class="form-select">
+            <option value="high">High (Continuous water flow / distinct crack)</option>
+            <option value="critical">Critical (Road sinking under load / exposed power)</option>
+            <option value="medium">Medium (Mild dampness / intermittent pressure)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Observation Details</label>
+          <textarea id="rep-desc" class="form-textarea" rows="3">Clean water bubbling between cobblestones. No rain in the last 24 hours.</textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-hero-secondary" onclick="window.app.closeCommunityReportModal()">Cancel</button>
+        <button class="btn-hero-primary" onclick="window.app.submitCommunityReport()">Submit &amp; Update Risk Model</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Check Before You Dig Modal -->
+  <div id="dig-modal" class="modal-backdrop">
+    <div class="modal-dialog" style="max-width: 760px;">
+      <div class="modal-header">
+        <h3>🚜 "Check Before You Dig" — Excavation Conflict Advisory</h3>
+        <button class="drawer-close-btn" onclick="window.app.closeDigSafetyModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:12px; color:var(--text-muted);">
+          Scan subterranean conduits crossing your planned excavation corridor before breaking ground.
+        </p>
+
+        <div style="background:var(--bg-card-subtle); padding:14px; border-radius:10px; border:1.5px solid var(--border-subtle); display:grid; grid-template-columns:2fr 1fr 1fr; gap:10px; margin-bottom:12px;">
+          <div class="form-group">
+            <label class="form-label">Project / Road Work</label>
+            <input type="text" id="dig-project-title" class="form-input" value="Mall Road Drainage Rehabilitation">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Buffer Radius (m)</label>
+            <input type="number" id="dig-radius" class="form-input" value="40">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Planned Depth (m)</label>
+            <input type="number" id="dig-depth" class="form-input" value="1.8" step="0.1">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label">Trench Lat</label>
+            <input type="number" id="dig-lat" class="form-input" step="0.0001" value="32.2396">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Trench Lng</label>
+            <input type="number" id="dig-lng" class="form-input" step="0.0001" value="77.1887">
+          </div>
+          <div style="display:flex; align-items:flex-end;">
+            <button class="btn-hero-primary" style="width:100%; justify-content:center; padding:9px;" onclick="window.app.recalcDigCheck()">
+              Scan Zone
+            </button>
+          </div>
+        </div>
+
+        <div id="dig-results-body">
+          <!-- Populated by dig_safety.js -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-hero-secondary" onclick="window.app.closeDigSafetyModal()">Close</button>
+        <button class="btn-hero-primary" onclick="window.print()">Export Clearance Briefing (PDF)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       AUTHENTICATION GATEWAY & MULTI-STEP VERIFICATION SYSTEM
+       ========================================================================== -->
+  <div id="auth-security-gate" class="auth-gate-backdrop" style="display:none;">
+    <div class="auth-modal-card">
+      <div class="auth-modal-header">
+        <button class="drawer-close-btn" onclick="window.app.closeAuthModal()" style="position:absolute; top:18px; right:18px; font-size:20px; color:var(--text-dim); background:none; border:none; cursor:pointer;" title="Close Modal">&times;</button>
+        <div class="auth-brand-logo">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span style="font-size:18px; font-weight:900; color:var(--text-main); letter-spacing:-0.5px;">Terra<span style="color:var(--accent-mint);">Flow</span> India</span>
+        </div>
+        <h2>National Subsurface Infrastructure Gateway</h2>
+        <p>Sign In or Create an Account to access full national pipeline maps, 3D views &amp; field records</p>
+      </div>
+
+      <div class="auth-tab-switch">
+        <button id="tab-btn-signin" class="auth-tab-btn active" onclick="window.app.switchAuthTab('signin')">Sign In</button>
+        <button id="tab-btn-register" class="auth-tab-btn" onclick="window.app.switchAuthTab('register')">Create Verified Account (Multi-Step OTP)</button>
+      </div>
+
+      <div class="auth-modal-body">
+        <!-- TAB 1: SIGN IN FORM -->
+        <div id="auth-form-signin">
+          <form onsubmit="window.app.submitLogin(event)">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label">Official Email or Registered Mobile</label>
+              <input type="text" id="login-id" class="form-input" placeholder="e.g. admin@terraflow.gov.in or 9876543210" value="admin@terraflow.gov.in" required>
+            </div>
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label">Password</label>
+              <input type="password" id="login-pwd" class="form-input" placeholder="Enter your secure password" value="Password@123" required>
+            </div>
+            <button type="submit" class="btn-hero-primary" style="width:100%; justify-content:center; padding:12px; font-size:14px; margin-bottom:14px;">
+              Verify Credentials &amp; Unlock Platform &rarr;
+            </button>
+          </form>
+
+          <div style="text-align:center; margin:16px 0 12px; color:#64748b; font-size:11px; text-transform:uppercase; letter-spacing:1px; position:relative;">
+            <span style="background:#ffffff; padding:0 10px; position:relative; z-index:2; color:var(--text-dim); font-weight:700;">Quick Evaluator / Demo Clearance</span>
+            <div style="position:absolute; top:50%; left:0; right:0; height:1px; background:var(--border-subtle); z-index:1;"></div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <button class="btn-drawer-action" style="padding:10px; font-size:11px; text-align:left;" onclick="window.app.demoQuickLogin('admin')">
+              <strong style="color:var(--accent-mint); display:block;">GAIL Operator Demo</strong>
+              <span style="font-size:10px; color:var(--text-dim);">National Critical Level 3</span>
+            </button>
+            <button class="btn-drawer-action" style="padding:10px; font-size:11px; text-align:left;" onclick="window.app.demoQuickLogin('inspector')">
+              <strong style="color:#10b981; display:block;">Jal Shakti / PWD Demo</strong>
+              <span style="font-size:10px; color:var(--text-dim);">Municipal Grid Level 2</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB 2: MULTI-STEP REGISTRATION WIZARD -->
+        <div id="auth-form-register" style="display:none;">
+          <!-- Wizard Steps Track -->
+          <div class="wizard-steps-track">
+            <div id="wizard-node-1" class="wizard-step-node active">
+              <div class="wizard-circle">1</div>
+              <span class="wizard-node-label">Identity</span>
+            </div>
+            <div id="wizard-node-2" class="wizard-step-node">
+              <div class="wizard-circle">2</div>
+              <span class="wizard-node-label">Contact</span>
+            </div>
+            <div id="wizard-node-3" class="wizard-step-node">
+              <div class="wizard-circle">3</div>
+              <span class="wizard-node-label">OTP Verify</span>
+            </div>
+            <div id="wizard-node-4" class="wizard-step-node">
+              <div class="wizard-circle">4</div>
+              <span class="wizard-node-label">Security</span>
+            </div>
+            <div id="wizard-node-5" class="wizard-step-node">
+              <div class="wizard-circle">5</div>
+              <span class="wizard-node-label">Clearance</span>
+            </div>
+          </div>
+
+          <!-- Step 1: Personal & Organization Details -->
+          <div id="reg-step-1">
+            <div class="form-group" style="margin-bottom:12px;">
+              <label class="form-label">Full Name</label>
+              <input type="text" id="reg-name" class="form-input" placeholder="e.g. Vikramaditya Singh" value="Vikramaditya Singh">
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+              <label class="form-label">Agency / Operating Authority</label>
+              <select id="reg-org" class="form-select">
+                <option value="GAIL (India) Limited">GAIL (India) Limited &mdash; Natural Gas</option>
+                <option value="IOCL Pipelines Division">Indian Oil Corporation Limited (IOCL)</option>
+                <option value="BPCL / HPCL Pipelines">BPCL / HPCL Petroleum Infrastructure</option>
+                <option value="Ministry of Jal Shakti">Ministry of Jal Shakti &mdash; National Water Grid</option>
+                <option value="Delhi Jal Board (DJB)">Delhi Jal Board (Government of NCT of Delhi)</option>
+                <option value="BWSSB Bengaluru">Bangalore Water Supply (BWSSB)</option>
+                <option value="State PWD / Municipal Corporation">State PWD &amp; Municipal Corporation</option>
+                <option value="Verified Citizen Infrastructure Inspector">Verified Citizen Infrastructure Inspector</option>
+              </select>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+              <div class="form-group">
+                <label class="form-label">Role / Designation</label>
+                <input type="text" id="reg-role" class="form-input" placeholder="e.g. Pipeline Engineer" value="Executive Pipeline Inspector">
+              </div>
+              <div class="form-group">
+                <label class="form-label">State Jurisdiction</label>
+                <select id="reg-state" class="form-select">
+                  <option value="National Grid">Pan-India / National Grid</option>
+                  <option value="Delhi (NCT)">Delhi (NCT)</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Gujarat">Gujarat</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Tamil Nadu">Tamil Nadu</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                  <option value="Himachal Pradesh">Himachal Pradesh</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn-hero-primary" style="width:100%; justify-content:center; padding:11px;" onclick="window.app.goToRegStep(2)">
+              Proceed to Contact Details &rarr;
+            </button>
+          </div>
+
+          <!-- Step 2: Contact Details (Email + Mobile) -->
+          <div id="reg-step-2" style="display:none;">
+            <div style="background:var(--accent-mint-subtle); border:1.5px solid var(--border-mint); padding:12px; border-radius:8px; margin-bottom:14px; font-size:12px; color:var(--text-main);">
+              <strong style="color:var(--accent-mint);">Two-Factor Authentication:</strong> Real cryptographic OTP verification codes will be sent to both your official email address and mobile phone number.
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+              <label class="form-label">Official Email Address</label>
+              <input type="email" id="reg-email" class="form-input" placeholder="e.g. inspector@gail.co.in or yourname@gmail.com" value="inspector.singh@gail.co.in">
+            </div>
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label">10-Digit Mobile Number (India +91)</label>
+              <div style="display:flex; gap:8px;">
+                <span style="background:var(--bg-card-subtle); border:1.5px solid var(--border-subtle); color:var(--text-main); padding:9px 12px; border-radius:8px; font-size:13px; font-weight:700;">+91</span>
+                <input type="tel" id="reg-mobile" class="form-input" style="flex:1;" placeholder="e.g. 9811223344" maxlength="10" value="9811223344">
+              </div>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button class="btn-hero-secondary" style="flex:1;" onclick="window.app.goToRegStep(1)">&larr; Back</button>
+              <button id="btn-send-otp" class="btn-hero-primary" style="flex:2; justify-content:center;" onclick="window.app.sendRegOtp()">
+                Generate &amp; Dispatch Real OTP &rarr;
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 3: Real OTP Verification -->
+          <div id="reg-step-3" style="display:none;">
+            <div style="background:var(--accent-mint-subtle); border:1.5px solid var(--border-mint); border-radius:10px; padding:14px; margin-bottom:16px;">
+              <div style="font-size:13px; color:var(--text-main); font-weight:800; margin-bottom:4px;">
+                📲 Verification Code Dispatched!
+              </div>
+              <div style="font-size:12px; color:var(--text-muted); line-height:1.4;">
+                A real 6-digit OTP has been generated and dispatched to:
+                <br><strong style="color:var(--accent-mint);" id="otp-disp-mobile">+91 9811223344</strong> &amp; <strong style="color:var(--accent-mint);" id="otp-disp-email">inspector.singh@gail.co.in</strong>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label" style="text-align:center;">Enter 6-Digit Verification OTP</label>
+              <input type="text" id="reg-otp-combined" class="form-input" style="font-size:22px; font-weight:900; letter-spacing:8px; text-align:center; font-family:monospace; color:#38bdf8;" placeholder="------" maxlength="6">
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+              <span id="reg-otp-timer" style="font-size:11px; color:var(--text-dim); font-family:monospace;">Resend available in 2:00</span>
+              <button id="btn-resend-otp" class="btn-drawer-action" style="padding:4px 8px; font-size:10px;" onclick="window.app.sendRegOtp()" disabled>Resend OTP</button>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+              <button class="btn-hero-secondary" style="flex:1;" onclick="window.app.goToRegStep(2)">&larr; Change Details</button>
+              <button class="btn-hero-primary" style="flex:2; justify-content:center;" onclick="window.app.verifyRegOtp()">
+                Verify OTP &amp; Proceed &rarr;
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 4: Security Password & PIN -->
+          <div id="reg-step-4" style="display:none;">
+            <div class="form-group" style="margin-bottom:12px;">
+              <label class="form-label">Set Account Password</label>
+              <input type="password" id="reg-password" class="form-input" placeholder="Create a strong password" value="SecurePass@2026">
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+              <label class="form-label">Confirm Password</label>
+              <input type="password" id="reg-password-confirm" class="form-input" placeholder="Re-enter password" value="SecurePass@2026">
+            </div>
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label">4-Digit Field Clearance Security PIN</label>
+              <input type="password" id="reg-pin" class="form-input" placeholder="4 digits (e.g. 7842)" maxlength="4" value="7842" style="letter-spacing:6px; font-family:monospace; font-size:18px;">
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button class="btn-hero-secondary" style="flex:1;" onclick="window.app.goToRegStep(3)">&larr; Back</button>
+              <button class="btn-hero-primary" style="flex:2; justify-content:center;" onclick="window.app.finalizeRegistration()">
+                Complete Registration &amp; Activate &rarr;
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 5: Verification Certificate -->
+          <div id="reg-step-5" style="display:none; text-align:center;">
+            <div style="font-size:42px; margin-bottom:8px;">🎖️</div>
+            <h3 style="font-size:18px; color:#10b981; font-weight:800; margin-bottom:4px;">Security Clearance Verified!</h3>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Your official identity has been verified with real Mobile SMS OTP clearance.</p>
+
+            <div style="background:var(--bg-card-subtle); border:1.5px solid var(--border-mint); border-radius:12px; padding:16px; text-align:left; margin-bottom:20px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span style="font-size:11px; color:#64748b; text-transform:uppercase;">Authorized Inspector</span>
+                <span id="cert-user-clearance" style="font-size:10px; background:rgba(16,185,129,0.2); color:#10b981; padding:2px 8px; border-radius:10px; font-weight:700;">LEVEL 2 VERIFIED</span>
+              </div>
+              <div style="font-size:16px; font-weight:800; color:var(--text-main);" id="cert-user-name">Vikramaditya Singh</div>
+              <div style="font-size:12px; color:var(--accent-mint); font-weight:700; margin-top:2px;" id="cert-user-org">GAIL (India) Limited</div>
+              <div style="font-size:11px; color:var(--text-dim); margin-top:6px; font-family:monospace;" id="cert-user-id">ID: TF-8842 &bull; Active</div>
+            </div>
+
+            <button class="btn-hero-primary" style="width:100%; justify-content:center; padding:12px; font-size:14px;" onclick="window.app.unlockPlatformAfterRegistration()">
+              Enter National Platform &amp; Enable Push Alerts 🚀
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       NOTIFICATION FLYOUT DRAWER (Real-Time Indian Pipeline Incidents)
+       ========================================================================== -->
+  <div id="notif-drawer-panel" class="notif-flyout-drawer">
+    <div class="notif-drawer-header">
+      <h4>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <span>Live Incident Alerts</span>
+      </h4>
+      <div style="display:flex; gap:6px;">
+        <button class="btn-drawer-action" onclick="window.notificationService.markAllAsRead()">Mark Read</button>
+        <button class="btn-drawer-action" onclick="window.notificationService.toggleDrawer(false)">&times;</button>
+      </div>
+    </div>
+
+    <!-- Notification Permission & Background Notification Controls -->
+    <div style="padding:12px 16px; background:var(--bg-card-subtle); border-bottom:1.5px solid var(--border-subtle); display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; justify-content:space-between; gap:8px;">
+        <button class="btn-drawer-action" style="color:var(--accent-mint); border-color:var(--border-mint); flex:1;" onclick="window.notificationService.requestPermission()">
+          🔔 Allow Push Alerts
+        </button>
+        <button class="btn-drawer-action" style="color:#e11d48; border-color:#fecdd3; flex:1;" onclick="window.notificationService.simulateLiveAlert()">
+          🚨 Simulate Alert
+        </button>
+      </div>
+      <div style="display:flex; justify-content:space-between; gap:8px;">
+        <button class="btn-drawer-action" style="color:#0284c7; border-color:#bae6fd; flex:1;" onclick="window.notificationService.scheduleBackgroundAlert(5)" title="Arm 5-second background timer then minimize or close Chrome to test">
+          ⏱️ Test Background Alert (Close Chrome &amp; Test)
+        </button>
+        <button class="btn-drawer-action" style="color:var(--text-muted); border-color:var(--border-subtle);" onclick="window.authService.openSmsSettings()" title="Configure Fast2SMS API Key for real cellular delivery">
+          ⚙️ SMS Key
+        </button>
+      </div>
+    </div>
+
+    <div id="notif-drawer-list" class="notif-drawer-body">
+      <!-- Populated by notification_service.js -->
+    </div>
+
+    <div class="notif-drawer-footer">
+      <span style="font-size:10px; color:#64748b;">Direct citizen &amp; operator telemetry</span>
+      <button class="btn-drawer-action" onclick="window.app.openCommunityReportModal()">Report Incident +</button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       Scripts & Google Maps API
+       ========================================================================== -->
+  <!-- Three.js & Controls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Leaflet GIS (Fallback) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Google Maps JavaScript API with provided Key -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAdYXKzMoO-Ukx0K7xTx8GosxXRYf-f4BM&libraries=places,geometry"></script>
+
+  <!-- TerraFlow Data, Authentication & Notification Services -->
+  <script src="./india_pipeline_data.js"></script>
+  <script src="./synthetic_data.js"></script>
+  <script src="./data_generator.js"></script>
+  <script src="./auth_service.js"></script>
+  <script src="./notification_service.js"></script>
+  <script src="./risk_model.js"></script>
+  <script src="./dig_safety.js"></script>
+  <script src="./terrain_3d.js"></script>
+  <script src="./google_map_gis.js"></script>
+  <script src="./map_gis.js"></script>
+  <script src="./app.js"></script>
+
+</body>
+</html>
