@@ -1,0 +1,11 @@
+TerraFlow India - Subsurface Digital Twin & Critical Pipeline Intelligence
+========================================================================
+To run the platform:
+1. Double-click "start_terraflow.bat" (starts Python API server & opens browser)
+   OR run: python serve.py
+   OR double-click "index.html" directly in any modern browser!
+
+Demo Login Credentials:
+- GAIL Operator:  admin@terraflow.gov.in / Password@123
+- Jal Shakti:     priya.narayanan@jalshakti.gov.in / Password@123
+- Or click "Create Verified Account" to test the real OTP 2-Factor onboarding flow!
